@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required, immutable)
+    //   - email: string (required, immutable)
+    //   - name: string (optional)
+    //   - positiveEnergyScore: number (required)
+    //   - manifestationStreak: number (required)
+    //   - lastManifestationDate: string (optional)
+    //   - dream: string (optional)
+    //   - magicLogCount: number (required)
+    //   - referralBalance: number (required)
+    //   - createdAt: timestamp (required, immutable)
+    //
+    // Collection: rewards
+    // Document ID: {rewardId}
+    // Fields:
+    //   - id: string (required, immutable)
+    //   - userId: string (required, immutable)
+    //   - title: string (required, immutable)
+    //   - description: string (optional, immutable)
+    //   - isScratched: boolean (required)
+    //   - createdAt: timestamp (required, immutable)
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+    
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'positiveEnergyScore', 'manifestationStreak', 'magicLogCount', 'referralBalance', 'createdAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 100 &&
+             data.email is string && isValidEmail(data.email) && data.email.size() < 100 &&
+             (!('name' in data) || (data.name is string && data.name.size() < 100)) &&
+             (!('dream' in data) || (data.dream is string && data.dream.size() < 200)) &&
+             data.positiveEnergyScore is number && data.positiveEnergyScore >= 0 && data.positiveEnergyScore <= 100 &&
+             data.manifestationStreak is number && data.manifestationStreak >= 0 &&
+             data.magicLogCount is number && data.magicLogCount >= 0 &&
+             data.referralBalance is number && data.referralBalance >= 0 &&
+             (!('lastManifestationDate' in data) || isValidDateString(data.lastManifestationDate)) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidReward(data) {
+      return hasRequiredFields(['id', 'userId', 'title', 'isScratched', 'createdAt']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 100 &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() < 1000)) &&
+             data.isScratched is bool &&
+             data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && uidUnchanged();
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && uidNotModified() &&
+                    request.resource.data.email == resource.data.email &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false; // Users cannot be deleted directly from client
+    }
+
+    match /rewards/{rewardId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isValidReward(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidReward(request.resource.data) &&
+                    request.resource.data.id == resource.data.id &&
+                    request.resource.data.userId == resource.data.userId &&
+                    request.resource.data.title == resource.data.title &&
+                    (!('description' in resource.data) || request.resource.data.description == resource.data.description) &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+  }
+}

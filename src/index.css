@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --color-neo-gold: #FFD700;
+  --color-deep-purple: #4B0082;
+  --color-pure-black: #000000;
+  --color-dark-surface: #0a0a0a;
+  --color-dark-elevated: #111111;
+  
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer utilities {
+  .neo-shadow {
+    box-shadow: 8px 8px 16px #050505, -8px -8px 16px #151515;
+  }
+  .neo-shadow-inset {
+    box-shadow: inset 8px 8px 16px #050505, inset -8px -8px 16px #151515;
+  }
+  .neo-shadow-gold {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.1);
+  }
+  .text-glow-gold {
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+  }
+  .text-glow-purple {
+    text-shadow: 0 0 10px rgba(75, 0, 130, 0.8);
+  }
+}
+
+body {
+  background-color: var(--color-pure-black);
+  color: white;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Aura Stylz user profile containing manifestation stats.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "positiveEnergyScore": { "type": "number", "description": "Score from 1-100" },
+        "manifestationStreak": { "type": "number" },
+        "lastManifestationDate": { "type": "string", "format": "date-time" },
+        "dream": { "type": "string" },
+        "magicLogCount": { "type": "number" },
+        "referralBalance": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "positiveEnergyScore", "manifestationStreak", "magicLogCount", "referralBalance", "createdAt"]
+    },
+    "Reward": {
+      "title": "Reward",
+      "description": "A scratch card reward for a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "isScratched": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "isScratched", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles."
+    },
+    "rewards/{rewardId}": {
+      "schema": { "$ref": "#/entities/Reward" },
+      "description": "Stores user rewards."
+    }
+  }
+}

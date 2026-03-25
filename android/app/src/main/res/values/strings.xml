@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Aura Stylz</string>
+    <string name="title_activity_main">Aura Stylz</string>
+    <string name="package_name">com.aurastylz.app</string>
+    <string name="custom_url_scheme">com.aurastylz.app</string>
+</resources>
